@@ -75,7 +75,12 @@ func getProductsWithCommentsAt(page int) []ProductWithComments {
 			defer subrows.Close()
 			for subrows.Next() {
 				var cw CommentWriter
-				subrows.Scan(&cw.Content, &cw.Writer)
+				var userId int
+				subrows.Scan(&cw.Content, &userId)
+				load, ok := usersID.Load(userId)
+				if ok {
+					cw.Writer = load.(User).Name
+				}
 				cWriters = append(cWriters, cw)
 			}
 
