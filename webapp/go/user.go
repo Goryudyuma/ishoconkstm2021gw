@@ -16,7 +16,7 @@ type User struct {
 }
 
 func authenticate(email string, password string) (int, bool) {
-	load, ok := usersEmailPassword.Load(email)
+	load, ok := usersEmailPassword.Load(usersEmailPasswordKey{email,password})
 	if !ok {
 		return 0, false
 	}
