@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"unicode/utf8"
 
 	"github.com/gin-gonic/contrib/sessions"
@@ -15,6 +16,13 @@ import (
 )
 
 var db *sql.DB
+
+var users sync.Map
+
+type UsersKey struct {
+	email    string
+	password string
+}
 
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
@@ -61,13 +69,13 @@ func main() {
 		pass := c.PostForm("password")
 
 		session := sessions.Default(c)
-		user, result := authenticate(email, pass)
+		userID, result := authenticate(email, pass)
 		if result {
 			// 認証成功
-			session.Set("uid", user.ID)
+			session.Set("uid", userID)
 			session.Save()
 
-			user.UpdateLastLogin()
+			// user.UpdateLastLogin()
 
 			c.Redirect(http.StatusSeeOther, "/")
 		} else {
@@ -223,6 +231,23 @@ func main() {
 		db.Exec("DELETE FROM products WHERE id > 10000")
 		db.Exec("DELETE FROM comments WHERE id > 200000")
 		db.Exec("DELETE FROM histories WHERE id > 500000")
+
+		rows, err := db.Query("SELECT id, email, password FROM users")
+		if err != nil {
+			c.String(http.StatusServiceUnavailable, err.Error())
+			return
+		}
+		for rows.Next() {
+			var email, password string
+			var id int
+			err := rows.Scan(&id, &email, &password)
+			if err != nil {
+				c.String(http.StatusServiceUnavailable, err.Error())
+				return
+			}
+
+			users.Store(UsersKey{email, password}, id)
+		}
 
 		c.String(http.StatusOK, "Finish")
 	})

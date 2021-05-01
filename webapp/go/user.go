@@ -15,14 +15,12 @@ type User struct {
 	LastLogin string
 }
 
-func authenticate(email string, password string) (User, bool) {
-	var u User
-	err := db.QueryRow("SELECT * FROM users WHERE email = ? LIMIT 1", email).Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.LastLogin)
-	if err != nil {
-		return u, false
+func authenticate(email string, password string) (int, bool) {
+	load, ok := users.Load(email)
+	if !ok{
+		return 0, false
 	}
-	result := password == u.Password
-	return u, result
+	return load.(int), ok
 }
 
 func notAuthenticated(session sessions.Session) bool {
@@ -98,5 +96,5 @@ func (u *User) CreateComment(pid string, content string) {
 }
 
 func (u *User) UpdateLastLogin() {
-	db.Exec("UPDATE users SET last_login = ? WHERE id = ?", time.Now(), u.ID)
+	// db.Exec("UPDATE users SET last_login = ? WHERE id = ?", time.Now(), u.ID)
 }
