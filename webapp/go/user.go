@@ -49,7 +49,7 @@ func currentUser(session sessions.Session) User {
 // BuyingHistory : products which user had bought
 func (u *User) BuyingHistory() (products []Product) {
 	rows, err := db.Query(
-		"SELECT p.id, p.name, p.description, p.image_path, p.price, h.created_at "+
+		"SELECT p.id, p.name, SUBSTRING(p.description, 1, 71), p.image_path, p.price, h.created_at "+
 			"FROM histories as h "+
 			"LEFT OUTER JOIN products as p "+
 			"ON h.product_id = p.id "+

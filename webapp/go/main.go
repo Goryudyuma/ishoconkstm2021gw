@@ -9,10 +9,10 @@ import (
 	"sync"
 	"unicode/utf8"
 
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/pprof"
 	_ "github.com/go-sql-driver/mysql"
 )
 
