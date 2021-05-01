@@ -91,6 +91,6 @@ func (u *User) CreateComment(pid string, content string) {
 }
 
 func (u *User) UpdateLastLogin() {
-	u.LastLogin = time.Now().Format("2006-01-02 03:04:05")
+	u.LastLogin = time.Now().Format("2006-01-02 15:04:05")
 	usersID.Store(u.ID, *u)
 }
