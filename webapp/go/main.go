@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/pprof"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -42,6 +43,7 @@ func main() {
 	db.SetMaxIdleConns(5)
 
 	r := gin.Default()
+	pprof.Register(r)
 	// load templates
 	r.Use(static.Serve("/css", static.LocalFile("public/css", true)))
 	r.Use(static.Serve("/images", static.LocalFile("public/images", true)))
