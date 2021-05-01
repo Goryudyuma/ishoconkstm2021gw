@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"html/template"
 	"net/http"
 	"os"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/contrib/renders/multitemplate"
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
@@ -35,24 +35,6 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-type MyHTMLRender struct {
-	templates map[string]*template.Template
-}
-
-func (r *MyHTMLRender) Add(name string, tmpl *template.Template) {
-	if r.templates == nil {
-		r.templates = make(map[string]*template.Template)
-	}
-	r.templates[name] = tmpl
-}
-
-func (r *MyHTMLRender) Instance(name string, data interface{}) render.Render {
-	return render.HTML{
-		Template: r.templates[name],
-		Data:     data,
-	}
-}
-
 func main() {
 	// database setting
 	user := getEnv("ISHOCON1_DB_USER", "ishocon")
@@ -68,14 +50,14 @@ func main() {
 	r.Use(static.Serve("/images", static.LocalFile("public/images", true)))
 	layout := "templates/layout.tmpl"
 
-	r.HTMLRender= func()render.HTMLRender{
-		r := &MyHTMLRender{}
-		r.Add("login",template.Must(template.ParseFiles("templates/login.tmpl")))
-		r.Add("index",template.Must(template.ParseFiles(layout, "templates/index.tmpl")))
-		r.Add("mypage", template.Must(template.ParseFiles(layout, "templates/mypage.tmpl")))
-		r.Add("product",template.Must(template.ParseFiles(layout, "templates/product.tmpl")))
+	r.HTMLRender = func() render.HTMLRender {
+		x := multitemplate.New()
+		x.AddFromFiles("login", "templates/login.tmpl")
+		x.AddFromFiles("index", layout, "templates/index.tmpl")
+		x.AddFromFiles("mypage", layout, "templates/mypage.tmpl")
+		x.AddFromFiles("product", layout, "templates/product.tmpl")
 
-		return r
+		return x
 	}()
 
 	// session store
@@ -259,7 +241,7 @@ func main() {
 		}
 		for rows.Next() {
 			var user User
-			err := rows.Scan(&user.ID,&user.Name, &user.Email, &user.Password, &user.LastLogin)
+			err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.LastLogin)
 			if err != nil {
 				c.String(http.StatusServiceUnavailable, err.Error())
 				return
