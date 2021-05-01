@@ -66,18 +66,16 @@ func getProductsWithCommentsAt(page int) []ProductWithComments {
 			// select 5 comments and its writer for the product
 			var cWriters []CommentWriter
 
-			subrows, suberr := db.Query("SELECT * FROM comments as c INNER JOIN users as u "+
-				"ON c.user_id = u.id WHERE c.product_id = ? ORDER BY c.created_at DESC LIMIT 5", p.ID)
+			subrows, suberr := db.Query("SELECT c.content, c.user_id FROM comments as c "+
+				"WHERE c.product_id = ? ORDER BY c.created_at DESC LIMIT 5", p.ID)
 			if suberr != nil {
 				subrows = nil
 			}
 
 			defer subrows.Close()
 			for subrows.Next() {
-				var i int
-				var s string
 				var cw CommentWriter
-				subrows.Scan(&i, &i, &i, &cw.Content, &s, &i, &cw.Writer, &s, &s, &s)
+				subrows.Scan(&cw.Content, &cw.Writer)
 				cWriters = append(cWriters, cw)
 			}
 
