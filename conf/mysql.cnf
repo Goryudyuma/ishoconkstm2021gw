@@ -1,0 +1,5 @@
+[mysqld]
+
+slow_query_log=OFF
+long_query_time=0
+slow_query_log_file=/var/log/mysql/slow.log
