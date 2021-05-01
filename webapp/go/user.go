@@ -17,7 +17,7 @@ type User struct {
 
 func authenticate(email string, password string) (int, bool) {
 	load, ok := usersEmailPassword.Load(email)
-	if !ok{
+	if !ok {
 		return 0, false
 	}
 	return load.(int), ok
@@ -29,8 +29,8 @@ func notAuthenticated(session sessions.Session) bool {
 }
 
 func getUser(uid int) User {
-	user,ok:=usersID.Load(uid)
-	if !ok{
+	user, ok := usersID.Load(uid)
+	if !ok {
 		return User{}
 	}
 	return user.(User)
@@ -39,6 +39,9 @@ func getUser(uid int) User {
 func currentUser(session sessions.Session) User {
 
 	uid := session.Get("uid")
+	if uid == nil {
+		return User{}
+	}
 
 	return getUser(uid.(int))
 }
@@ -88,6 +91,6 @@ func (u *User) CreateComment(pid string, content string) {
 }
 
 func (u *User) UpdateLastLogin() {
-	u.LastLogin=time.Now().Format("2006-01-02 03:04:05")
+	u.LastLogin = time.Now().Format("2006-01-02 03:04:05")
 	usersID.Store(u.ID, *u)
 }
