@@ -16,7 +16,7 @@ type User struct {
 }
 
 func authenticate(email string, password string) (int, bool) {
-	load, ok := usersEmailPassword.Load(usersEmailPasswordKey{email,password})
+	load, ok := usersEmailPassword.Load(usersEmailPasswordKey{email, password})
 	if !ok {
 		return 0, false
 	}
@@ -47,16 +47,16 @@ func currentUser(session sessions.Session) User {
 }
 
 // BuyingHistory : products which user had bought
-func (u *User) BuyingHistory() (products []Product) {
+func (u *User) BuyingHistory() (products []Product, totalCost int) {
 	rows, err := db.Query(
 		"SELECT p.id, p.name, SUBSTRING(p.description, 1, 71), p.image_path, p.price, h.created_at "+
 			"FROM histories as h "+
 			"LEFT OUTER JOIN products as p "+
 			"ON h.product_id = p.id "+
 			"WHERE h.user_id = ? "+
-			"ORDER BY h.id DESC", u.ID)
+			"ORDER BY h.id DESC LIMIT 30", u.ID)
 	if err != nil {
-		return nil
+		return nil, 0
 	}
 
 	defer rows.Close()
@@ -71,6 +71,12 @@ func (u *User) BuyingHistory() (products []Product) {
 			panic(err.Error())
 		}
 		products = append(products, p)
+	}
+
+	err = db.QueryRow("SELECT sum(p.price) FROM histories as h INNER JOIN products as p ON h.product_id = p.id WHERE h.user_id = ?", u.ID).
+		Scan(&totalCost)
+	if err != nil {
+		return nil, 0
 	}
 
 	return
