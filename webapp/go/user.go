@@ -54,7 +54,7 @@ func (u *User) BuyingHistory() (products []Product) {
 			"LEFT OUTER JOIN products as p "+
 			"ON h.product_id = p.id "+
 			"WHERE h.user_id = ? "+
-			"ORDER BY h.id DESC", u.ID)
+			"ORDER BY h.id DESC LIMIT 30", u.ID)
 	if err != nil {
 		return nil
 	}
