@@ -149,7 +149,7 @@ func main() {
 		uid, _ := strconv.Atoi(c.Param("userId"))
 		user := getUser(uid)
 
-		products, totalPay := user.BuyingHistory()
+		products, totalPay := user.BuyingHistory(c)
 
 		// shorten description
 		var sdProducts []Product
