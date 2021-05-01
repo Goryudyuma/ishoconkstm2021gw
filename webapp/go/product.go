@@ -44,7 +44,8 @@ func getProduct(pid int) Product {
 func getProductsWithCommentsAt(page int) []ProductWithComments {
 	// select 50 products with offset page*50
 	products := []ProductWithComments{}
-	rows, err := db.Query("SELECT * FROM products ORDER BY id DESC LIMIT 50 OFFSET ?", page*50)
+	page50 := page * 50
+	rows, err := db.Query("SELECT * FROM products WHERE ? >= id AND id > ? ORDER BY id DESC", 10000-page50, 10000-page50-50)
 	if err != nil {
 		return nil
 	}
