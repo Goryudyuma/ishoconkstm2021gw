@@ -48,8 +48,8 @@ func main() {
 	// load templates
 	r.Use(static.Serve("/css", static.LocalFile("public/css", true)))
 	r.Use(static.Serve("/images", static.LocalFile("public/images", true)))
-	layout := "templates/layout.tmpl"
 
+	layout := "templates/layout.tmpl"
 	r.HTMLRender = func() render.HTMLRender {
 		x := multitemplate.New()
 		x.AddFromFiles("login", "templates/login.tmpl")
