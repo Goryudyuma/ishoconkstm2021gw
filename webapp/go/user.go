@@ -1,7 +1,6 @@
 package main
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/contrib/sessions"
@@ -41,11 +40,7 @@ func currentUser(session sessions.Session) User {
 
 	uid := session.Get("uid")
 
-	userId, err := strconv.Atoi(uid.(string))
-	if err != nil {
-		return User{}
-	}
-	return getUser(userId)
+	return getUser(uid.(int))
 }
 
 // BuyingHistory : products which user had bought
