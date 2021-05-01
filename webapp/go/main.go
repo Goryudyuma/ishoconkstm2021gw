@@ -17,12 +17,14 @@ import (
 
 var db *sql.DB
 
-var users sync.Map
+var usersEmailPassword sync.Map
 
-type UsersKey struct {
+type usersEmailPasswordKey struct {
 	email    string
 	password string
 }
+
+var usersID sync.Map
 
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
@@ -232,21 +234,21 @@ func main() {
 		db.Exec("DELETE FROM comments WHERE id > 200000")
 		db.Exec("DELETE FROM histories WHERE id > 500000")
 
-		rows, err := db.Query("SELECT id, email, password FROM users")
+		rows, err := db.Query("SELECT id, name, email, password, last_login FROM users")
 		if err != nil {
 			c.String(http.StatusServiceUnavailable, err.Error())
 			return
 		}
 		for rows.Next() {
-			var email, password string
-			var id int
-			err := rows.Scan(&id, &email, &password)
+			var user User
+			err := rows.Scan(&user.ID,&user.Name, &user.Email, &user.Password, &user.LastLogin)
 			if err != nil {
 				c.String(http.StatusServiceUnavailable, err.Error())
 				return
 			}
 
-			users.Store(UsersKey{email, password}, id)
+			usersEmailPassword.Store(usersEmailPasswordKey{user.Email, user.Password}, user.ID)
+			usersID.Store(user.ID, user)
 		}
 
 		c.String(http.StatusOK, "Finish")

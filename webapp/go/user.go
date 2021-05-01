@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/contrib/sessions"
@@ -16,7 +17,7 @@ type User struct {
 }
 
 func authenticate(email string, password string) (int, bool) {
-	load, ok := users.Load(email)
+	load, ok := usersEmailPassword.Load(email)
 	if !ok{
 		return 0, false
 	}
@@ -29,26 +30,22 @@ func notAuthenticated(session sessions.Session) bool {
 }
 
 func getUser(uid int) User {
-	u := User{}
-	r := db.QueryRow("SELECT * FROM users WHERE id = ? LIMIT 1", uid)
-	err := r.Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.LastLogin)
-	if err != nil {
-		return u
+	user,ok:=usersID.Load(uid)
+	if !ok{
+		return User{}
 	}
-
-	return u
+	return user.(User)
 }
 
 func currentUser(session sessions.Session) User {
-	uid := session.Get("uid")
-	u := User{}
-	r := db.QueryRow("SELECT * FROM users WHERE id = ? LIMIT 1", uid)
-	err := r.Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.LastLogin)
-	if err != nil {
-		return u
-	}
 
-	return u
+	uid := session.Get("uid")
+
+	userId, err := strconv.Atoi(uid.(string))
+	if err != nil {
+		return User{}
+	}
+	return getUser(userId)
 }
 
 // BuyingHistory : products which user had bought
@@ -96,5 +93,6 @@ func (u *User) CreateComment(pid string, content string) {
 }
 
 func (u *User) UpdateLastLogin() {
-	// db.Exec("UPDATE users SET last_login = ? WHERE id = ?", time.Now(), u.ID)
+	u.LastLogin=time.Now().Format("2006-01-02 03:04:05")
+	usersID.Store(u.ID, *u)
 }
