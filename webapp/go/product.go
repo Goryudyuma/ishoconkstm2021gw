@@ -62,7 +62,7 @@ func getProductsWithCommentsAt(page int) []ProductWithComments {
 		panic(err)
 		return nil
 	}
-	var m map[int]int
+	m := make(map[int]int)
 	for rows.Next() {
 		var productId, c int
 		err := rows.Scan(&productId, &c)
@@ -74,7 +74,7 @@ func getProductsWithCommentsAt(page int) []ProductWithComments {
 	}
 
 	rows, err = db.Query("SELECT c.content, c.user_id, c.product_id FROM comments as c WHERE ? >= c.product_id AND c.product_id > ? ORDER BY c.created_at", 10000-page50, 10000-page50-50)
-	var comment map[int][]CommentWriter
+	comment := make(map[int][]CommentWriter)
 	for rows.Next() {
 		var content string
 		var userId, productId int
