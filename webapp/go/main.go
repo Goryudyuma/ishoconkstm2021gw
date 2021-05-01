@@ -163,6 +163,10 @@ func main() {
 				p.Description = string([]rune(p.Description)[:70]) + "…"
 			}
 			sdProducts = append(sdProducts, p)
+
+			if len(sdProducts) > 30 {
+				break
+			}
 		}
 
 		c.HTML(http.StatusOK, "mypage", gin.H{
