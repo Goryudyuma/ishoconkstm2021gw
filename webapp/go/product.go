@@ -57,7 +57,7 @@ func getProductsWithCommentsAt(page int) []ProductWithComments {
 		products = append(products, p)
 	}
 
-	rows, err = db.Query("SELECT product_id, count(1) as c FROM comments WHERE ? >= product_id AND product_id > ? GROUP BY product_id ORDER BY id DESC", 10000-page50, 10000-page50-50)
+	rows, err = db.Query("SELECT product_id, count(1) as c FROM comments WHERE ? >= product_id AND product_id > ? GROUP BY product_id", 10000-page50, 10000-page50-50)
 	if err != nil {
 		panic(err)
 		return nil
