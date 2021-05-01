@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/render"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -34,6 +35,24 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
+type MyHTMLRender struct {
+	templates map[string]*template.Template
+}
+
+func (r *MyHTMLRender) Add(name string, tmpl *template.Template) {
+	if r.templates == nil {
+		r.templates = make(map[string]*template.Template)
+	}
+	r.templates[name] = tmpl
+}
+
+func (r *MyHTMLRender) Instance(name string, data interface{}) render.Render {
+	return render.HTML{
+		Template: r.templates[name],
+		Data:     data,
+	}
+}
+
 func main() {
 	// database setting
 	user := getEnv("ISHOCON1_DB_USER", "ishocon")
@@ -49,10 +68,15 @@ func main() {
 	r.Use(static.Serve("/images", static.LocalFile("public/images", true)))
 	layout := "templates/layout.tmpl"
 
-	loginTmpl, _ := template.ParseFiles("templates/login.tmpl")
-	indexTmpl:=template.Must(template.ParseFiles(layout, "templates/index.tmpl"))
-	mypageTmpl:=template.Must(template.ParseFiles(layout, "templates/mypage.tmpl"))
-	productTmpl:=template.Must(template.ParseFiles(layout, "templates/product.tmpl"))
+	r.HTMLRender= func()render.HTMLRender{
+		r := &MyHTMLRender{}
+		r.Add("login",template.Must(template.ParseFiles("templates/login.tmpl")))
+		r.Add("index",template.Must(template.ParseFiles(layout, "templates/index.tmpl")))
+		r.Add("mypage", template.Must(template.ParseFiles(layout, "templates/mypage.tmpl")))
+		r.Add("product",template.Must(template.ParseFiles(layout, "templates/product.tmpl")))
+
+		return r
+	}()
 
 	// session store
 	store := sessions.NewCookieStore([]byte("mysession"))
@@ -65,7 +89,6 @@ func main() {
 		session.Clear()
 		session.Save()
 
-		r.SetHTMLTemplate(loginTmpl)
 		c.HTML(http.StatusOK, "login", gin.H{
 			"Message": "ECサイトで爆買いしよう！！！！",
 		})
@@ -89,7 +112,6 @@ func main() {
 		} else {
 			// 認証失敗
 
-			r.SetHTMLTemplate(loginTmpl)
 			c.HTML(http.StatusOK, "login", gin.H{
 				"Message": "ログインに失敗しました",
 			})
@@ -102,7 +124,6 @@ func main() {
 		session.Clear()
 		session.Save()
 
-		r.SetHTMLTemplate(loginTmpl)
 		c.Redirect(http.StatusFound, "/login")
 	})
 
@@ -133,8 +154,7 @@ func main() {
 			sProducts = append(sProducts, p)
 		}
 
-		r.SetHTMLTemplate(indexTmpl)
-		c.HTML(http.StatusOK, "base", gin.H{
+		c.HTML(http.StatusOK, "index", gin.H{
 			"CurrentUser": cUser,
 			"Products":    sProducts,
 		})
@@ -163,8 +183,7 @@ func main() {
 			sdProducts = append(sdProducts, p)
 		}
 
-		r.SetHTMLTemplate(mypageTmpl)
-		c.HTML(http.StatusOK, "base", gin.H{
+		c.HTML(http.StatusOK, "mypage", gin.H{
 			"CurrentUser": cUser,
 			"User":        user,
 			"Products":    sdProducts,
@@ -181,8 +200,7 @@ func main() {
 		cUser := currentUser(sessions.Default(c))
 		bought := product.isBought(cUser.ID)
 
-		r.SetHTMLTemplate(productTmpl)
-		c.HTML(http.StatusOK, "base", gin.H{
+		c.HTML(http.StatusOK, "product", gin.H{
 			"CurrentUser":   cUser,
 			"Product":       product,
 			"Comments":      comments,
@@ -194,7 +212,6 @@ func main() {
 	r.POST("/products/buy/:productId", func(c *gin.Context) {
 		// need authenticated
 		if notAuthenticated(sessions.Default(c)) {
-			r.SetHTMLTemplate(loginTmpl)
 			c.HTML(http.StatusForbidden, "login", gin.H{
 				"Message": "先にログインをしてください",
 			})
@@ -204,7 +221,6 @@ func main() {
 			cUser.BuyProduct(c.Param("productId"))
 
 			// redirect to user page
-			r.SetHTMLTemplate(mypageTmpl)
 			c.Redirect(http.StatusFound, "/users/"+strconv.Itoa(cUser.ID))
 		}
 	})
@@ -213,7 +229,6 @@ func main() {
 	r.POST("/comments/:productId", func(c *gin.Context) {
 		// need authenticated
 		if notAuthenticated(sessions.Default(c)) {
-			r.SetHTMLTemplate(loginTmpl)
 			c.HTML(http.StatusForbidden, "login", gin.H{
 				"Message": "先にログインをしてください",
 			})
@@ -223,7 +238,6 @@ func main() {
 			cUser.CreateComment(c.Param("productId"), c.PostForm("content"))
 
 			// redirect to user page
-			r.SetHTMLTemplate(mypageTmpl)
 			c.Redirect(http.StatusFound, "/users/"+strconv.Itoa(cUser.ID))
 		}
 	})
