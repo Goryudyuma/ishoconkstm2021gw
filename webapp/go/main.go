@@ -234,6 +234,9 @@ func main() {
 		db.Exec("DELETE FROM comments WHERE id > 200000")
 		db.Exec("DELETE FROM histories WHERE id > 500000")
 
+		usersEmailPassword = sync.Map{}
+		usersID = sync.Map{}
+
 		rows, err := db.Query("SELECT id, name, email, password, last_login FROM users")
 		if err != nil {
 			c.String(http.StatusServiceUnavailable, err.Error())
