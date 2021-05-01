@@ -74,7 +74,7 @@ func (u *User) BuyingHistory(c context.Context) (products []Product, totalCost i
 		products = append(products, p)
 	}
 
-	err = db.QueryRowContext(c,"SELECT sum(p.price) FROM histories as h INNER JOIN products as p ON h.product_id = p.id WHERE h.user_id = ?", u.ID).
+	err = db.QueryRowContext(c, "SELECT sum(p.price) FROM histories as h INNER JOIN products as p ON h.product_id = p.id WHERE h.user_id = ?", u.ID).
 		Scan(&totalCost)
 	if err != nil {
 		return nil, 0

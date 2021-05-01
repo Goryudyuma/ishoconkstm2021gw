@@ -54,41 +54,46 @@ func getProductsWithCommentsAt(page int) []ProductWithComments {
 	for rows.Next() {
 		p := ProductWithComments{}
 		err = rows.Scan(&p.ID, &p.Name, &p.Description, &p.ImagePath, &p.Price, &p.CreatedAt)
-
-		// select comment count for the product
-		var cnt int
-		cnterr := db.QueryRow("SELECT count(*) as count FROM comments WHERE product_id = ?", p.ID).Scan(&cnt)
-		if cnterr != nil {
-			cnt = 0
-		}
-		p.CommentCount = cnt
-
-		if cnt > 0 {
-			// select 5 comments and its writer for the product
-			var cWriters []CommentWriter
-
-			subrows, suberr := db.Query("SELECT c.content, c.user_id FROM comments as c "+
-				"WHERE c.product_id = ? ORDER BY c.created_at DESC LIMIT 5", p.ID)
-			if suberr != nil {
-				subrows = nil
-			}
-
-			defer subrows.Close()
-			for subrows.Next() {
-				var cw CommentWriter
-				var userId int
-				subrows.Scan(&cw.Content, &userId)
-				load, ok := usersID.Load(userId)
-				if ok {
-					cw.Writer = load.(User).Name
-				}
-				cWriters = append(cWriters, cw)
-			}
-
-			p.Comments = cWriters
-		}
-
 		products = append(products, p)
+	}
+
+	rows, err = db.Query("SELECT product_id, count(1) as c FROM comments WHERE ? >= product_id AND product_id > ? GROUP BY product_id ORDER BY id DESC", 10000-page50, 10000-page50-50)
+	if err != nil {
+		return nil
+	}
+	var m map[int]int
+	for rows.Next() {
+		var productId, c int
+		err := rows.Scan(&productId, &c)
+		if err != nil {
+			return nil
+		}
+		m[productId] = c
+	}
+
+	rows, err = db.Query("SELECT c.content, c.user_id, c.product_id FROM comments as c WHERE ? >= c.product_id AND c.product_id > ? ORDER BY c.created_at", 10000-page50, 10000-page50-50)
+	var comment map[int][]CommentWriter
+	for rows.Next() {
+		var content string
+		var userId, productId int
+		err := rows.Scan(&content, &userId, &productId)
+		if err != nil {
+			return nil
+		}
+		if len(comment[productId]) < 5 {
+			var cw CommentWriter
+			load, ok := usersID.Load(userId)
+			if ok {
+				cw.Writer = load.(User).Name
+			}
+			cw.Content = content
+			comment[productId] = append(comment[productId], cw)
+		}
+	}
+
+	for i := 0; i < len(products); i++ {
+		products[i].CommentCount = m[products[i].ID]
+		products[i].Comments = comment[products[i].ID]
 	}
 
 	return products
