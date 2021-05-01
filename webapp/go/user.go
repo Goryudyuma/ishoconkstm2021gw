@@ -25,7 +25,7 @@ func authenticate(email string, password string) (int, bool) {
 
 func notAuthenticated(session sessions.Session) bool {
 	uid := session.Get("uid")
-	return !(uid.(int) > 0)
+	return uid == nil || !(uid.(int) > 0)
 }
 
 func getUser(uid int) User {
