@@ -39,5 +39,5 @@ CREATE TABLE `histories` (
   `created_at` datetime NOT NULL,
   PRIMARY KEY (`id`),
   KEY `IX_histories_product_id_user_id` (`product_id`,`user_id`),
-  KEY `IX_histories_user_id_id_product_id_created_at` (`user_id`,`id`,`product_id`,`created_at`)
+  KEY `IX_histories_user_id_id` (`user_id`,`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
