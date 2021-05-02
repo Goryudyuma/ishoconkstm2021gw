@@ -7,33 +7,33 @@ type ProductWithComments types.ProductWithComments
 type CommentWriter types.CommentWriter
 
 func getProduct(pid int) Product {
-	p := Product{}
-	row := db.QueryRow("SELECT * FROM products WHERE id = ? LIMIT 1", pid)
-	err := row.Scan(&p.ID, &p.Name, &p.Description, &p.ImagePath, &p.Price, &p.CreatedAt)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return p
+	product, _ := productsID.Load(pid)
+	return product.(Product)
 }
 
 func getProductsWithCommentsAt(page int) []ProductWithComments {
 	// select 50 products with offset page*50
-	products := []ProductWithComments{}
+	products := make([]ProductWithComments, 50)
 	page50 := page * 50
-	rows, err := db.Query("SELECT * FROM products WHERE ? >= id AND id > ? ORDER BY id DESC", 10000-page50, 10000-page50-50)
-	if err != nil {
-		return nil
+
+	for i := 0; i < 50; i++ {
+		index := 10000 - page50 - 50 + 1 + i
+		if productRow, ok := productsID.Load(index); ok {
+			product := productRow.(Product)
+			products[i] = ProductWithComments{
+				product.ID,
+				product.Name,
+				product.Description,
+				product.ImagePath,
+				product.Price,
+				product.CreatedAt,
+				0,
+				[]types.CommentWriter{},
+			}
+		}
 	}
 
-	defer rows.Close()
-	for rows.Next() {
-		p := ProductWithComments{}
-		err = rows.Scan(&p.ID, &p.Name, &p.Description, &p.ImagePath, &p.Price, &p.CreatedAt)
-		products = append(products, p)
-	}
-
-	rows, err = db.Query("SELECT product_id, count(1) as c FROM comments WHERE ? >= product_id AND product_id > ? GROUP BY product_id", 10000-page50, 10000-page50-50)
+	rows, err := db.Query("SELECT product_id, count(1) as c FROM comments WHERE ? >= product_id AND product_id > ? GROUP BY product_id", 10000-page50, 10000-page50-50)
 	if err != nil {
 		panic(err)
 		return nil

@@ -30,6 +30,8 @@ type usersEmailPasswordKey struct {
 
 var usersID sync.Map
 
+var productsID sync.Map
+
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value
@@ -219,6 +221,28 @@ func main() {
 
 			usersEmailPassword.Store(usersEmailPasswordKey{user.Email, user.Password}, user.ID)
 			usersID.Store(user.ID, user)
+		}
+		err = rows.Close()
+		if err != nil {
+			c.String(http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		rows, err = db.Query("SELECT * FROM products")
+		if err != nil {
+			c.String(http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		for rows.Next() {
+			p := Product{}
+			err = rows.Scan(&p.ID, &p.Name, &p.Description, &p.ImagePath, &p.Price, &p.CreatedAt)
+			productsID.Store(p.ID, p)
+		}
+		err = rows.Close()
+		if err != nil {
+			c.String(http.StatusServiceUnavailable, err.Error())
+			return
 		}
 
 		c.String(http.StatusOK, "Finish")
