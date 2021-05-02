@@ -62,7 +62,7 @@ func main() {
 		session.Clear()
 		session.Save()
 
-		c.HTML(http.StatusOK, templates.Login("ECサイトで爆買いしよう！！！！"), nil)
+		c.HTML(http.StatusOK, templates.Login("ECサイトで爆買いしよう！！！！"), gin.H{})
 	})
 
 	// POST /login
@@ -83,7 +83,7 @@ func main() {
 		} else {
 			// 認証失敗
 
-			c.HTML(http.StatusOK, templates.Login("ログインに失敗しました"), nil)
+			c.HTML(http.StatusOK, templates.Login("ログインに失敗しました"), gin.H{})
 		}
 	})
 
@@ -123,7 +123,7 @@ func main() {
 			sProducts = append(sProducts, types.ProductWithComments(p))
 		}
 
-		c.HTML(http.StatusOK, templates.Index(types.User(cUser), sProducts), nil)
+		c.HTML(http.StatusOK, templates.Index(types.User(cUser), sProducts), gin.H{})
 	})
 
 	// GET /users/:userId
@@ -148,7 +148,7 @@ func main() {
 			}
 		}
 
-		c.HTML(http.StatusOK, templates.MyPage(types.User(cUser), types.User(user), sdProducts, totalPay), nil)
+		c.HTML(http.StatusOK, templates.MyPage(types.User(cUser), types.User(user), sdProducts, totalPay), gin.H{})
 	})
 
 	// GET /products/:productId
@@ -160,7 +160,7 @@ func main() {
 		cUser := currentUser(sessions.Default(c))
 		bought := product.isBought(cUser.ID)
 
-		c.HTML(http.StatusOK, templates.ProductPage(types.User(cUser), types.Product(product), comments, bought), nil)
+		c.HTML(http.StatusOK, templates.ProductPage(types.User(cUser), types.Product(product), comments, bought), gin.H{})
 	})
 
 	// POST /products/buy/:productId
