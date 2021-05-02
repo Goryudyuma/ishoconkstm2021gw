@@ -44,7 +44,7 @@ func currentUser(session sessions.Session) User {
 // BuyingHistory : products which user had bought
 func (u User) BuyingHistory(c context.Context) (products []Product, totalCost int) {
 	rows, err := db.QueryContext(c,
-		"SELECT p.id, p.name, SUBSTRING(p.description, 1, 71), p.image_path, p.price, h.created_at "+
+		"SELECT p.id, p.name, p.image_path, p.price, h.created_at "+
 			"FROM histories as h "+
 			"LEFT OUTER JOIN products as p "+
 			"ON h.product_id = p.id "+
@@ -59,7 +59,7 @@ func (u User) BuyingHistory(c context.Context) (products []Product, totalCost in
 		p := Product{}
 		var cAt string
 		fmt := "2006-01-02 15:04:05"
-		err = rows.Scan(&p.ID, &p.Name, &p.Description, &p.ImagePath, &p.Price, &cAt)
+		err = rows.Scan(&p.ID, &p.Name, &p.ImagePath, &p.Price, &cAt)
 		tmp, _ := time.Parse(fmt, cAt)
 		p.CreatedAt = (tmp.Add(9 * time.Hour)).Format(fmt)
 		if err != nil {

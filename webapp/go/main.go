@@ -32,6 +32,8 @@ var usersID sync.Map
 
 var productsID sync.Map
 
+var productDescriptionMemo sync.Map
+
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value
@@ -110,9 +112,19 @@ func main() {
 		// shorten description and comment
 		var sProducts []types.ProductWithComments
 		for _, p := range products {
-			if utf8.RuneCountInString(p.Description) > 70 {
-				p.Description = string([]rune(p.Description)[:70]) + "…"
+			var productDescription string
+			productDescriptionRow, ok := productDescriptionMemo.Load(p.ID)
+			if !ok {
+				if utf8.RuneCountInString(p.Description) > 70 {
+					productDescription = string([]rune(p.Description)[:70]) + "…"
+				} else {
+					productDescription = p.Description
+				}
+				productDescriptionMemo.Store(p.ID, productDescription)
+			} else {
+				productDescription = productDescriptionRow.(string)
 			}
+			p.Description = productDescription
 
 			var newCW []types.CommentWriter
 			for _, c := range p.Comments {
@@ -140,9 +152,19 @@ func main() {
 		// shorten description
 		var sdProducts []types.Product
 		for _, p := range products {
-			if utf8.RuneCountInString(p.Description) > 70 {
-				p.Description = string([]rune(p.Description)[:70]) + "…"
+			var productDescription string
+			productDescriptionRow, ok := productDescriptionMemo.Load(p.ID)
+			if !ok {
+				if utf8.RuneCountInString(p.Description) > 70 {
+					productDescription = string([]rune(p.Description)[:70]) + "…"
+				} else {
+					productDescription = p.Description
+				}
+				productDescriptionMemo.Store(p.ID, productDescription)
+			} else {
+				productDescription = productDescriptionRow.(string)
 			}
+			p.Description = productDescription
 			sdProducts = append(sdProducts, types.Product(p))
 
 			if len(sdProducts) > 30 {
@@ -238,6 +260,14 @@ func main() {
 			p := Product{}
 			err = rows.Scan(&p.ID, &p.Name, &p.Description, &p.ImagePath, &p.Price, &p.CreatedAt)
 			productsID.Store(p.ID, p)
+
+			var productDescription string
+			if utf8.RuneCountInString(p.Description) > 70 {
+				productDescription = string([]rune(p.Description)[:70]) + "…"
+			} else {
+				productDescription = p.Description
+			}
+			productDescriptionMemo.Store(p.ID, productDescription)
 		}
 		err = rows.Close()
 		if err != nil {
