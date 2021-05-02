@@ -3,3 +3,23 @@
 slow_query_log=OFF
 long_query_time=0
 slow_query_log_file=/var/log/mysql/slow.log
+
+innodb_flush_method=O_DIRECT
+
+
+# ソケット・ファイル
+socket=/var/lib/mysql/mysql.sock
+
+# InnoDBのデータとインデックスをキャッシュするバッファのサイズ(推奨は物理メモリの8割)
+innodb_buffer_pool_size=4G
+
+# コミットされていないトランザクションのためのバッファのサイズ。innodb_buffer_pool_sizeの25%程度(最大でも64MB)
+# データインポート時やデータの洗替え時などは32M等に設定する
+innodb_log_buffer_size=64M
+
+# innodb_buffer_pool_sizeをいくつのインスタンスに分けるか指定。バッファサイズが大きい場合は分割することを推奨
+# innodb_buffer_pool_instances=8
+
+
+# バッファプール上で変更されたデータをディスクに書き出す場合に、近隣のページをまとめて1回のI/Oで書き出す仕組み(SSDの場合は無効化が推奨)
+innodb_flush_neighbors=0
