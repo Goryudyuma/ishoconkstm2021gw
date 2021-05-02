@@ -1,7 +1,5 @@
 package main
 
-import "log"
-
 // Product Model
 type Product struct {
 	ID          int
@@ -104,8 +102,6 @@ func getProductsWithCommentsAt(page int) []ProductWithComments {
 
 func (p *Product) isBought(uid int) bool {
 	var count int
-	log.Print(uid)
-	log.Print(p.ID)
 	err := db.QueryRow(
 		"SELECT count(*) as count FROM histories WHERE product_id = ? AND user_id = ?",
 		p.ID, uid,
