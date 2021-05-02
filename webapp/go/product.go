@@ -1,32 +1,10 @@
 package main
 
-// Product Model
-type Product struct {
-	ID          int
-	Name        string
-	Description string
-	ImagePath   string
-	Price       int
-	CreatedAt   string
-}
+import "github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/types"
 
-// ProductWithComments Model
-type ProductWithComments struct {
-	ID           int
-	Name         string
-	Description  string
-	ImagePath    string
-	Price        int
-	CreatedAt    string
-	CommentCount int
-	Comments     []CommentWriter
-}
-
-// CommentWriter Model
-type CommentWriter struct {
-	Content string
-	Writer  string
-}
+type Product types.Product
+type ProductWithComments types.ProductWithComments
+type CommentWriter types.CommentWriter
 
 func getProduct(pid int) Product {
 	p := Product{}
@@ -72,7 +50,7 @@ func getProductsWithCommentsAt(page int) []ProductWithComments {
 	}
 
 	rows, err = db.Query("SELECT c.content, c.user_id, c.product_id FROM comments as c WHERE ? >= c.product_id AND c.product_id > ? ORDER BY c.created_at", 10000-page50, 10000-page50-50)
-	comment := make(map[int][]CommentWriter)
+	comment := make(map[int][]types.CommentWriter)
 	for rows.Next() {
 		var content string
 		var userId, productId int
@@ -82,7 +60,7 @@ func getProductsWithCommentsAt(page int) []ProductWithComments {
 			return nil
 		}
 		if len(comment[productId]) < 5 {
-			var cw CommentWriter
+			var cw types.CommentWriter
 			load, ok := usersID.Load(userId)
 			if ok {
 				cw.Writer = load.(User).Name
@@ -94,7 +72,7 @@ func getProductsWithCommentsAt(page int) []ProductWithComments {
 
 	for i := 0; i < len(products); i++ {
 		products[i].CommentCount = m[products[i].ID]
-		products[i].Comments = comment[products[i].ID]
+		products[i].Comments = (comment[products[i].ID])
 	}
 
 	return products

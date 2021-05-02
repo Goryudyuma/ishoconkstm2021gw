@@ -1,3 +1,4 @@
+{% func Login(message string) %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,7 +11,7 @@
   <div class="container">
     <div class="row">
       <div class="col-md-4 col-md-offset-4">
-        <div class="text-danger" id="logout-message">{{ .Message }}</div>
+        <div class="text-danger" id="logout-message">{%s message %}</div>
         <div class="login-panel panel panel-default">
           <div class="panel-heading">
             <h3 class="panel-title">Sign In</h3>
@@ -35,3 +36,4 @@
   </div>
 </body>
 </html>
+{% endfunc %}

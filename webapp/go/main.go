@@ -1,3 +1,5 @@
+//go:generate go get -u github.com/valyala/quicktemplate/qtc
+//go:generate qtc -dir=templates
 package main
 
 import (
@@ -8,6 +10,8 @@ import (
 	"sync"
 	"unicode/utf8"
 
+	"github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/templates"
+	"github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/types"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/contrib/renders/multitemplate"
 	"github.com/gin-gonic/contrib/sessions"
@@ -119,13 +123,13 @@ func main() {
 		}
 		products := getProductsWithCommentsAt(page)
 		// shorten description and comment
-		var sProducts []ProductWithComments
+		var sProducts []types.ProductWithComments
 		for _, p := range products {
 			if utf8.RuneCountInString(p.Description) > 70 {
 				p.Description = string([]rune(p.Description)[:70]) + "…"
 			}
 
-			var newCW []CommentWriter
+			var newCW []types.CommentWriter
 			for _, c := range p.Comments {
 				if utf8.RuneCountInString(c.Content) > 25 {
 					c.Content = string([]rune(c.Content)[:25]) + "…"
@@ -133,13 +137,10 @@ func main() {
 				newCW = append(newCW, c)
 			}
 			p.Comments = newCW
-			sProducts = append(sProducts, p)
+			sProducts = append(sProducts, types.ProductWithComments(p))
 		}
 
-		c.HTML(http.StatusOK, "index", gin.H{
-			"CurrentUser": cUser,
-			"Products":    sProducts,
-		})
+		c.String(http.StatusOK, templates.Index(types.User(cUser), sProducts))
 	})
 
 	// GET /users/:userId

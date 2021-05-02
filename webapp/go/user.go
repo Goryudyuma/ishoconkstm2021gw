@@ -4,17 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/types"
 	"github.com/gin-gonic/contrib/sessions"
 )
 
-// User model
-type User struct {
-	ID        int
-	Name      string
-	Email     string
-	Password  string
-	LastLogin string
-}
+type User types.User
 
 func authenticate(email string, password string) (int, bool) {
 	load, ok := usersEmailPassword.Load(usersEmailPasswordKey{email, password})
@@ -48,7 +42,7 @@ func currentUser(session sessions.Session) User {
 }
 
 // BuyingHistory : products which user had bought
-func (u *User) BuyingHistory(c context.Context) (products []Product, totalCost int) {
+func (u User) BuyingHistory(c context.Context) (products []Product, totalCost int) {
 	rows, err := db.QueryContext(c,
 		"SELECT p.id, p.name, SUBSTRING(p.description, 1, 71), p.image_path, p.price, h.created_at "+
 			"FROM histories as h "+

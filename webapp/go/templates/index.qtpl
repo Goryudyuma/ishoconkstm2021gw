@@ -1,0 +1,45 @@
+{% import "github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/types" %}
+{% func Index(currentUser types.User, products []types.ProductWithComments) %}
+{%= header(currentUser) %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>今日は大安売りの日です！</h1>
+  </div>
+</div>
+<div class="container">
+  <div class="row">
+    {% for _, product := range products %}
+      <div class="col-md-4">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <a href="/products/{%d product.ID %}">{%s product.Name %}</a>
+          </div>
+          <div class="panel-body">
+            <a href="/products/{%d product.ID %}"><img src="{%s product.ImagePath %}" class="img-responsive" /></a>
+            <h4>価格</h4>
+            <p>{%d product.Price %}円</p>
+            <h4>商品説明</h4>
+            <p>{%s product.Description %}</p>
+            <h4>{%d product.CommentCount %}件のレビュー</h4>
+            <ul>
+              {% for _, cw := range product.Comments %}
+                <li>{%s cw.Content %} by {%s cw.Writer %}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% if currentUser.ID > 0 %}
+            <div class="panel-footer">
+              <form method="POST" action="/products/buy/{%d product.ID %}">
+                <fieldset>
+                  <input class="btn btn-success btn-block" type="submit" name="buy" value="購入" />
+                </fieldset>
+              </form>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{%= footer() %}
+{% endfunc %}
