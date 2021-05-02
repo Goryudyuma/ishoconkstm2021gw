@@ -13,11 +13,9 @@ import (
 	"github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/templates"
 	"github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/types"
 	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/contrib/renders/multitemplate"
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/render"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -53,17 +51,6 @@ func main() {
 	r.Use(static.Serve("/css", static.LocalFile("public/css", true)))
 	r.Use(static.Serve("/images", static.LocalFile("public/images", true)))
 
-	layout := "templates/layout.tmpl"
-	r.HTMLRender = func() render.HTMLRender {
-		x := multitemplate.New()
-		x.AddFromFiles("login", "templates/login.tmpl")
-		x.AddFromFiles("index", layout, "templates/index.tmpl")
-		x.AddFromFiles("mypage", layout, "templates/mypage.tmpl")
-		x.AddFromFiles("product", layout, "templates/product.tmpl")
-
-		return x
-	}()
-
 	// session store
 	store := sessions.NewCookieStore([]byte("mysession"))
 	store.Options(sessions.Options{HttpOnly: true})
@@ -75,9 +62,7 @@ func main() {
 		session.Clear()
 		session.Save()
 
-		c.HTML(http.StatusOK, "login", gin.H{
-			"Message": "ECサイトで爆買いしよう！！！！",
-		})
+		c.String(http.StatusOK, templates.Login("ECサイトで爆買いしよう！！！！"))
 	})
 
 	// POST /login
@@ -98,9 +83,7 @@ func main() {
 		} else {
 			// 認証失敗
 
-			c.HTML(http.StatusOK, "login", gin.H{
-				"Message": "ログインに失敗しました",
-			})
+			c.String(http.StatusOK, templates.Login("ログインに失敗しました"))
 		}
 	})
 
@@ -153,24 +136,19 @@ func main() {
 		products, totalPay := user.BuyingHistory(c)
 
 		// shorten description
-		var sdProducts []Product
+		var sdProducts []types.Product
 		for _, p := range products {
 			if utf8.RuneCountInString(p.Description) > 70 {
 				p.Description = string([]rune(p.Description)[:70]) + "…"
 			}
-			sdProducts = append(sdProducts, p)
+			sdProducts = append(sdProducts, types.Product(p))
 
 			if len(sdProducts) > 30 {
 				break
 			}
 		}
 
-		c.HTML(http.StatusOK, "mypage", gin.H{
-			"CurrentUser": cUser,
-			"User":        user,
-			"Products":    sdProducts,
-			"TotalPay":    totalPay,
-		})
+		c.String(http.StatusOK, templates.MyPage(types.User(cUser), types.User(user), sdProducts, totalPay))
 	})
 
 	// GET /products/:productId
@@ -182,12 +160,7 @@ func main() {
 		cUser := currentUser(sessions.Default(c))
 		bought := product.isBought(cUser.ID)
 
-		c.HTML(http.StatusOK, "product", gin.H{
-			"CurrentUser":   cUser,
-			"Product":       product,
-			"Comments":      comments,
-			"AlreadyBought": bought,
-		})
+		c.String(http.StatusOK, templates.ProductPage(types.User(cUser), types.Product(product),comments,bought))
 	})
 
 	// POST /products/buy/:productId
