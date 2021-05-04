@@ -58,6 +58,9 @@ func (u User) BuyingHistory(c context.Context) (products []Product, totalCost in
 		beginIndex = 0
 	}
 	boughtProduct := v.boughtProductList[beginIndex:]
+	for i := 0; i < len(boughtProduct) / 2; i++ {
+		boughtProduct[i], boughtProduct[len(boughtProduct) - i - 1] = boughtProduct[len(boughtProduct) - i - 1], boughtProduct[i]
+	}
 
 	for _, p := range boughtProduct {
 		productRow, _ := productsID.Load(p.productID)
@@ -91,7 +94,7 @@ func (u *User) BuyProduct(pid string) {
 		v.boughtProductMap[pidint] = struct{}{}
 		boughtProduct := boughtProductListType{
 			productID: pidint,
-			createdAt: time.Now().Add(9 * time.Hour).Format("2006-01-02 15:04:05"),
+			createdAt: time.Now().Format("2006-01-02 15:04:05"),
 		}
 		v.boughtProductList = append(v.boughtProductList, boughtProduct)
 		product, ok := productsID.Load(pidint)
