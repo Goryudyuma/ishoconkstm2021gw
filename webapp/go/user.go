@@ -111,9 +111,10 @@ func (u *User) BuyProduct(pid string) {
 		vRow, ok := historyUserID.Load(key)
 		if ok {
 			v = vRow.(historyUserIDValue)
+			v.boughtProductMap = make(map[int]struct{})
 		}
 		v.boughtProductMap[pidint] = struct{}{}
-		boughtProduct:=boughtProductListType{
+		boughtProduct := boughtProductListType{
 			productID: pidint,
 			createdAt: time.Now().Format("2006-01-02 15:04:05"),
 		}

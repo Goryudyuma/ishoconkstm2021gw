@@ -83,7 +83,7 @@ func (p *Product) isBought(uid int) bool {
 	vRow, ok := historyUserID.Load(historyUserIDKey{uid})
 	historyUserIDMutex.RUnlock()
 	if !ok {
-		panic("cacheになかった")
+		return false
 	}
 	v := vRow.(historyUserIDValue)
 	_, ok = v.boughtProductMap[p.ID]
