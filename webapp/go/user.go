@@ -53,7 +53,7 @@ func (u User) BuyingHistory(c context.Context) (products []Product, totalCost in
 	v := vRow.(historyUserIDValue)
 	totalCost = v.totalPay
 
-	beginIndex := len(v.boughtProductMap) - 30
+	beginIndex := len(v.boughtProductList) - 30
 	if beginIndex < 0 {
 		beginIndex = 0
 	}
