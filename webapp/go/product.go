@@ -17,7 +17,7 @@ func getProductsWithCommentsAt(page int) []ProductWithComments {
 	page50 := page * 50
 
 	for i := 0; i < 50; i++ {
-		index := 10000 - page50 - 50 + 1 + i
+		index := 10000 - page50 - 1 - i
 		if productRow, ok := productsID.Load(index); ok {
 			product := productRow.(Product)
 			products[i] = ProductWithComments{
