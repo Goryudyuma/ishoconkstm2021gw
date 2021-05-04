@@ -315,21 +315,21 @@ func main() {
 			historyUserIDMutex.Lock()
 			if v, ok := historyUserID.Load(key); ok {
 				value = v.(historyUserIDValue)
-				value.boughtProductMap[productID] = struct{}{}
-
-				fmt := "2006-01-02 15:04:05"
-				tmp, _ := time.Parse(fmt, createdAt)
-				value.boughtProductList = append(value.boughtProductList,
-					boughtProductListType{
-						productID: productID,
-						createdAt: (tmp.Add(9 * time.Hour)).Format(fmt),
-					})
-
-				product, _ := productsID.Load(productID)
-				value.totalPay += product.(Product).Price
 			} else {
 				value.boughtProductMap = make(map[int]struct{})
 			}
+			value.boughtProductMap[productID] = struct{}{}
+
+			fmt := "2006-01-02 15:04:05"
+			tmp, _ := time.Parse(fmt, createdAt)
+			value.boughtProductList = append(value.boughtProductList,
+				boughtProductListType{
+					productID: productID,
+					createdAt: (tmp.Add(9 * time.Hour)).Format(fmt),
+				})
+
+			product, _ := productsID.Load(productID)
+			value.totalPay += product.(Product).Price
 			historyUserID.Store(key, value)
 			historyUserIDMutex.Unlock()
 		}
