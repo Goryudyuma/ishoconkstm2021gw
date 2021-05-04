@@ -323,6 +323,8 @@ func main() {
 
 				product, _ := productsID.Load(productID)
 				value.totalPay += product.(Product).Price
+			} else {
+				value.boughtProductMap = make(map[int]struct{})
 			}
 			historyUserID.Store(key, value)
 		}
