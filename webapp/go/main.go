@@ -246,6 +246,9 @@ func main() {
 
 		usersEmailPassword = sync.Map{}
 		usersID = sync.Map{}
+		productsID=sync.Map{}
+		productDescriptionMemo=sync.Map{}
+		historyUserID = sync.Map{}
 
 		rows, err := db.Query("SELECT id, name, email, password, last_login FROM users")
 		if err != nil {
