@@ -246,8 +246,8 @@ func main() {
 
 		usersEmailPassword = sync.Map{}
 		usersID = sync.Map{}
-		productsID=sync.Map{}
-		productDescriptionMemo=sync.Map{}
+		productsID = sync.Map{}
+		productDescriptionMemo = sync.Map{}
 		historyUserID = sync.Map{}
 
 		rows, err := db.Query("SELECT id, name, email, password, last_login FROM users")
@@ -312,6 +312,7 @@ func main() {
 				userID: userID,
 			}
 			value := historyUserIDValue{}
+			historyUserIDMutex.Lock()
 			if v, ok := historyUserID.Load(key); ok {
 				value = v.(historyUserIDValue)
 				value.boughtProductMap[productID] = struct{}{}
@@ -330,6 +331,7 @@ func main() {
 				value.boughtProductMap = make(map[int]struct{})
 			}
 			historyUserID.Store(key, value)
+			historyUserIDMutex.Unlock()
 		}
 		err = rows.Close()
 		if err != nil {
