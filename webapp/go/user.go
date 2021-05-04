@@ -91,7 +91,7 @@ func (u *User) BuyProduct(pid string) {
 		v.boughtProductMap[pidint] = struct{}{}
 		boughtProduct := boughtProductListType{
 			productID: pidint,
-			createdAt: time.Now().Format("2006-01-02 15:04:05"),
+			createdAt: time.Now().Add(9 * time.Hour).Format("2006-01-02 15:04:05"),
 		}
 		v.boughtProductList = append(v.boughtProductList, boughtProduct)
 		product, ok := productsID.Load(pidint)
