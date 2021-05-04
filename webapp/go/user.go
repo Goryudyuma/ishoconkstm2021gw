@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/types"
@@ -68,10 +69,26 @@ func (u User) BuyingHistory(c context.Context) (products []Product, totalCost in
 		products = append(products, p)
 	}
 
-	err = db.QueryRowContext(c, "SELECT sum(p.price) FROM histories as h INNER JOIN products as p ON h.product_id = p.id WHERE h.user_id = ?", u.ID).
-		Scan(&totalCost)
-	if err != nil {
+	historyUserIDMutex.RLock()
+	vRow, ok := historyUserID.Load(historyUserIDKey{u.ID})
+	historyUserIDMutex.RUnlock()
+	if !ok {
 		return nil, 0
+	}
+	v := vRow.(historyUserIDValue)
+	totalCost = v.totalPay
+
+	beginIndex := len(v.boughtProductMap) - 30
+	if beginIndex < 0 {
+		beginIndex = 0
+	}
+	boughtProduct := v.boughtProductList[beginIndex:]
+
+	for _, p := range boughtProduct {
+		productRow, _ := productsID.Load(p.productID)
+		product := productRow.(Product)
+		product.CreatedAt = p.createdAt
+		products = append(products, product)
 	}
 
 	return
@@ -79,9 +96,32 @@ func (u User) BuyingHistory(c context.Context) (products []Product, totalCost in
 
 // BuyProduct : buy product
 func (u *User) BuyProduct(pid string) {
+	pidint, err := strconv.Atoi(pid)
+	if err != nil {
+		panic(err.Error())
+	}
 	db.Exec(
 		"INSERT INTO histories (product_id, user_id, created_at) VALUES (?, ?, ?)",
 		pid, u.ID, time.Now())
+
+	historyUserIDMutex.Lock()
+	{
+		v := historyUserIDValue{}
+		key := historyUserIDKey{u.ID}
+		vRow, ok := historyUserID.Load(key)
+		if ok {
+			v = vRow.(historyUserIDValue)
+		}
+		v.boughtProductMap[pidint] = struct{}{}
+		boughtProduct:=boughtProductListType{
+			productID: pidint,
+			createdAt: time.Now().Format("2006-01-02 15:04:05"),
+		}
+		v.boughtProductList = append(v.boughtProductList, boughtProduct)
+		historyUserID.Store(key, v)
+	}
+	historyUserIDMutex.Unlock()
+
 }
 
 // CreateComment : create comment to the product

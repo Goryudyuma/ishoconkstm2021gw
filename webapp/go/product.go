@@ -79,14 +79,13 @@ func getProductsWithCommentsAt(page int) []ProductWithComments {
 }
 
 func (p *Product) isBought(uid int) bool {
-	var count int
-	err := db.QueryRow(
-		"SELECT count(*) as count FROM histories WHERE product_id = ? AND user_id = ?",
-		p.ID, uid,
-	).Scan(&count)
-	if err != nil {
-		panic(err.Error())
+	historyUserIDMutex.RLock()
+	vRow, ok := historyUserID.Load(historyUserIDKey{uid})
+	historyUserIDMutex.RUnlock()
+	if !ok {
+		panic("cacheになかった")
 	}
-
-	return count > 0
+	v := vRow.(historyUserIDValue)
+	_, ok = v.boughtProductMap[p.ID]
+	return ok
 }

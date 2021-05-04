@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 	"unicode/utf8"
 
 	"github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/templates"
@@ -33,6 +34,25 @@ var usersID sync.Map
 var productsID sync.Map
 
 var productDescriptionMemo sync.Map
+
+var historyUserID sync.Map
+
+type historyUserIDKey struct {
+	userID int
+}
+
+type historyUserIDValue struct {
+	totalPay          int
+	boughtProductMap  map[int]struct{}
+	boughtProductList []boughtProductListType
+}
+
+type boughtProductListType struct {
+	productID int
+	createdAt string
+}
+
+var historyUserIDMutex sync.RWMutex
 
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
@@ -267,6 +287,44 @@ func main() {
 				productDescription = p.Description
 			}
 			productDescriptionMemo.Store(p.ID, productDescription)
+		}
+		err = rows.Close()
+		if err != nil {
+			c.String(http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		rows, err = db.Query("SELECT id, product_id, user_id, created_at FROM histories ORDER BY id")
+		if err != nil {
+			c.String(http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		for rows.Next() {
+			var id, productID, userID int
+			var createdAt string
+			err = rows.Scan(&id, &productID, &userID, &createdAt)
+
+			key := historyUserIDKey{
+				userID: userID,
+			}
+			value := historyUserIDValue{}
+			if v, ok := historyUserID.Load(key); ok {
+				value = v.(historyUserIDValue)
+				value.boughtProductMap[productID] = struct{}{}
+
+				fmt := "2006-01-02 15:04:05"
+				tmp, _ := time.Parse(fmt, createdAt)
+				value.boughtProductList = append(value.boughtProductList,
+					boughtProductListType{
+						productID: productID,
+						createdAt: (tmp.Add(9 * time.Hour)).Format(fmt),
+					})
+
+				product, _ := productsID.Load(productID)
+				value.totalPay += product.(Product).Price
+			}
+			historyUserID.Store(key, value)
 		}
 		err = rows.Close()
 		if err != nil {
