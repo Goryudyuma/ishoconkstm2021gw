@@ -58,15 +58,15 @@ func (u User) BuyingHistory(c context.Context) (products []Product, totalCost in
 		beginIndex = 0
 	}
 	boughtProduct := v.boughtProductList[beginIndex:]
-	for i := 0; i < len(boughtProduct) / 2; i++ {
-		boughtProduct[i], boughtProduct[len(boughtProduct) - i - 1] = boughtProduct[len(boughtProduct) - i - 1], boughtProduct[i]
-	}
 
 	for _, p := range boughtProduct {
 		productRow, _ := productsID.Load(p.productID)
 		product := productRow.(Product)
 		product.CreatedAt = p.createdAt
 		products = append(products, product)
+	}
+	for i := 0; i < len(products) / 2; i++ {
+		products[i], products[len(products) - i - 1] = products[len(products) - i - 1], products[i]
 	}
 
 	return
