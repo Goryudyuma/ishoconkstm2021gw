@@ -1,5 +1,5 @@
 {% import "github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/types" %}
-{% func ProductPage(currentUser types.User, product types.Product, comments []types.Comment, alreadyBought bool) %}
+{% func ProductPage(currentUser types.User, product types.Product, alreadyBought bool) %}
 {%= header(currentUser) %}
 <div class="jumbotron">
   <div class="container">

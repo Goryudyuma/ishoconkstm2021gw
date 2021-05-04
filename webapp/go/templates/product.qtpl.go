@@ -21,7 +21,7 @@ var (
 )
 
 //line templates/product.qtpl:2
-func StreamProductPage(qw422016 *qt422016.Writer, currentUser types.User, product types.Product, comments []types.Comment, alreadyBought bool) {
+func StreamProductPage(qw422016 *qt422016.Writer, currentUser types.User, product types.Product, alreadyBought bool) {
 //line templates/product.qtpl:2
 	qw422016.N().S(`
 `)
@@ -82,22 +82,22 @@ func StreamProductPage(qw422016 *qt422016.Writer, currentUser types.User, produc
 }
 
 //line templates/product.qtpl:24
-func WriteProductPage(qq422016 qtio422016.Writer, currentUser types.User, product types.Product, comments []types.Comment, alreadyBought bool) {
+func WriteProductPage(qq422016 qtio422016.Writer, currentUser types.User, product types.Product, alreadyBought bool) {
 //line templates/product.qtpl:24
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line templates/product.qtpl:24
-	StreamProductPage(qw422016, currentUser, product, comments, alreadyBought)
+	StreamProductPage(qw422016, currentUser, product, alreadyBought)
 //line templates/product.qtpl:24
 	qt422016.ReleaseWriter(qw422016)
 //line templates/product.qtpl:24
 }
 
 //line templates/product.qtpl:24
-func ProductPage(currentUser types.User, product types.Product, comments []types.Comment, alreadyBought bool) string {
+func ProductPage(currentUser types.User, product types.Product, alreadyBought bool) string {
 //line templates/product.qtpl:24
 	qb422016 := qt422016.AcquireByteBuffer()
 //line templates/product.qtpl:24
-	WriteProductPage(qb422016, currentUser, product, comments, alreadyBought)
+	WriteProductPage(qb422016, currentUser, product, alreadyBought)
 //line templates/product.qtpl:24
 	qs422016 := string(qb422016.B)
 //line templates/product.qtpl:24

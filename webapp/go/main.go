@@ -180,12 +180,11 @@ func main() {
 	r.GET("/products/:productId", func(c *gin.Context) {
 		pid, _ := strconv.Atoi(c.Param("productId"))
 		product := getProduct(pid)
-		comments := getComments(pid)
 
 		cUser := currentUser(sessions.Default(c))
 		bought := product.isBought(cUser.ID)
 
-		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(templates.ProductPage(types.User(cUser), types.Product(product), comments, bought)))
+		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(templates.ProductPage(types.User(cUser), types.Product(product), bought)))
 	})
 
 	// POST /products/buy/:productId
