@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -389,6 +390,8 @@ func main() {
 			c.String(http.StatusServiceUnavailable, err.Error())
 			return
 		}
+
+		runtime.GC()
 
 		c.String(http.StatusOK, "Finish")
 	})
