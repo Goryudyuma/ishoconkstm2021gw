@@ -80,6 +80,16 @@ func main() {
 	db, _ = sql.Open("mysql", user+":"+pass+"@/"+dbname)
 	db.SetMaxIdleConns(5)
 
+	var err error
+	createCommentStmt, err = db.Prepare("INSERT INTO comments (product_id, user_id, content, created_at) VALUES (?, ?, ?, ?)")
+	if err != nil {
+		panic(err.Error())
+	}
+	buyProductStmt, err = db.Prepare("INSERT INTO histories (product_id, user_id, created_at) VALUES (?, ?, ?)")
+	if err != nil {
+		panic(err.Error())
+	}
+
 	r := gin.Default()
 	pprof.Register(r)
 	// load templates

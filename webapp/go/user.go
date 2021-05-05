@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"strconv"
 	"time"
 	"unicode/utf8"
@@ -73,15 +74,15 @@ func (u User) BuyingHistory(c context.Context) (products []Product, totalCost in
 	return
 }
 
+var buyProductStmt *sql.Stmt
+
 // BuyProduct : buy product
 func (u *User) BuyProduct(pid string) {
 	pidint, err := strconv.Atoi(pid)
 	if err != nil {
 		panic(err.Error())
 	}
-	db.Exec(
-		"INSERT INTO histories (product_id, user_id, created_at) VALUES (?, ?, ?)",
-		pid, u.ID, time.Now())
+	buyProductStmt.Exec(pid, u.ID, time.Now())
 
 	historyUserIDMutex.Lock()
 	{
@@ -108,11 +109,11 @@ func (u *User) BuyProduct(pid string) {
 
 }
 
+var createCommentStmt *sql.Stmt
+
 // CreateComment : create comment to the product
 func (u *User) CreateComment(pid string, content string) {
-	db.Exec(
-		"INSERT INTO comments (product_id, user_id, content, created_at) VALUES (?, ?, ?, ?)",
-		pid, u.ID, content, time.Now())
+	createCommentStmt.Exec(pid, u.ID, content, time.Now())
 
 	productID, err := strconv.Atoi(pid)
 	if err != nil {
