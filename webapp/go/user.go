@@ -65,8 +65,8 @@ func (u User) BuyingHistory(c context.Context) (products []Product, totalCost in
 		product.CreatedAt = p.createdAt
 		products = append(products, product)
 	}
-	for i := 0; i < len(products) / 2; i++ {
-		products[i], products[len(products) - i - 1] = products[len(products) - i - 1], products[i]
+	for i := 0; i < len(products)/2; i++ {
+		products[i], products[len(products)-i-1] = products[len(products)-i-1], products[i]
 	}
 
 	return
@@ -112,6 +112,33 @@ func (u *User) CreateComment(pid string, content string) {
 	db.Exec(
 		"INSERT INTO comments (product_id, user_id, content, created_at) VALUES (?, ?, ?, ?)",
 		pid, u.ID, content, time.Now())
+
+	productID, err := strconv.Atoi(pid)
+	if err != nil {
+		panic(err.Error())
+	}
+	key := commentProductIDKey{
+		productID: productID,
+	}
+	value := commentProductIDValue{}
+	if valueRow, ok := commentProductID.Load(key); ok {
+		value = valueRow.(commentProductIDValue)
+	}
+	value.count++
+
+	cw := types.CommentWriter{}
+	load, ok := usersID.Load(u.ID)
+	if ok {
+		cw.Writer = load.(User).Name
+	}
+	cw.Content = content
+	value.commentMemo = append(value.commentMemo, cw)
+	beginIndex := len(value.commentMemo) - 5
+	if beginIndex < 0 {
+		beginIndex = 0
+	}
+	value.commentMemo = value.commentMemo[beginIndex:]
+	commentProductID.Store(key, value)
 }
 
 func (u *User) UpdateLastLogin() {

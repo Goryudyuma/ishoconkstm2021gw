@@ -36,6 +36,7 @@ var productsID sync.Map
 var productDescriptionMemo sync.Map
 
 var historyUserID sync.Map
+var historyUserIDMutex sync.RWMutex
 
 type historyUserIDKey struct {
 	userID int
@@ -52,7 +53,16 @@ type boughtProductListType struct {
 	createdAt string
 }
 
-var historyUserIDMutex sync.RWMutex
+var commentProductID sync.Map
+
+type commentProductIDKey struct {
+	productID int
+}
+
+type commentProductIDValue struct {
+	count       int
+	commentMemo []types.CommentWriter
+}
 
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
@@ -249,6 +259,7 @@ func main() {
 		productsID = sync.Map{}
 		productDescriptionMemo = sync.Map{}
 		historyUserID = sync.Map{}
+		commentProductID = sync.Map{}
 
 		rows, err := db.Query("SELECT id, name, email, password, last_login FROM users")
 		if err != nil {
@@ -332,6 +343,46 @@ func main() {
 			value.totalPay += product.(Product).Price
 			historyUserID.Store(key, value)
 			historyUserIDMutex.Unlock()
+		}
+		err = rows.Close()
+		if err != nil {
+			c.String(http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		rows, err = db.Query("SELECT c.content, c.user_id, c.product_id FROM comments as c ORDER BY c.created_at, c.id")
+		if err != nil {
+			c.String(http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		for rows.Next() {
+			var content string
+			var userID, productID int
+			err = rows.Scan(&content, &userID, &productID)
+
+			key := commentProductIDKey{
+				productID: productID,
+			}
+			value := commentProductIDValue{}
+			if valueRow, ok := commentProductID.Load(key); ok {
+				value = valueRow.(commentProductIDValue)
+			}
+			value.count++
+
+			cw := types.CommentWriter{}
+			load, ok := usersID.Load(userID)
+			if ok {
+				cw.Writer = load.(User).Name
+			}
+			cw.Content = content
+			value.commentMemo = append(value.commentMemo, cw)
+			beginIndex := len(value.commentMemo) - 5
+			if beginIndex < 0 {
+				beginIndex = 0
+			}
+			value.commentMemo = value.commentMemo[beginIndex:]
+			commentProductID.Store(key, value)
 		}
 		err = rows.Close()
 		if err != nil {
