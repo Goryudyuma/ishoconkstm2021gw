@@ -158,9 +158,6 @@ func main() {
 
 			var newCW []types.CommentWriter
 			for _, c := range p.Comments {
-				if utf8.RuneCountInString(c.Content) > 25 {
-					c.Content = string([]rune(c.Content)[:25]) + "…"
-				}
 				newCW = append(newCW, c)
 			}
 			p.Comments = newCW
@@ -374,6 +371,9 @@ func main() {
 			load, ok := usersID.Load(userID)
 			if ok {
 				cw.Writer = load.(User).Name
+			}
+			if utf8.RuneCountInString(content) > 25 {
+				content = string([]rune(content)[:25]) + "…"
 			}
 			cw.Content = content
 			value.commentMemo = append(value.commentMemo, cw)

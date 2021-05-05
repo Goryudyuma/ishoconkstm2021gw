@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 	"time"
+	"unicode/utf8"
 
 	"github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/types"
 	"github.com/gin-gonic/contrib/sessions"
@@ -130,6 +131,9 @@ func (u *User) CreateComment(pid string, content string) {
 	load, ok := usersID.Load(u.ID)
 	if ok {
 		cw.Writer = load.(User).Name
+	}
+	if utf8.RuneCountInString(content) > 25 {
+		content = string([]rune(content)[:25]) + "…"
 	}
 	cw.Content = content
 	value.commentMemo = append(value.commentMemo, cw)
