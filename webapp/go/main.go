@@ -77,7 +77,7 @@ func main() {
 	user := getEnv("ISHOCON1_DB_USER", "ishocon")
 	pass := getEnv("ISHOCON1_DB_PASSWORD", "ishocon")
 	dbname := getEnv("ISHOCON1_DB_NAME", "ishocon1")
-	db, _ = sql.Open("mysql", user+":"+pass+"@/"+dbname)
+	db, _ = sql.Open("mysql", user+":"+pass+"@unix(/var/run/mysqld/mysqld.sock)/"+dbname)
 	db.SetMaxIdleConns(5)
 
 	var err error
