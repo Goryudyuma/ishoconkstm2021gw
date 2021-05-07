@@ -15,7 +15,8 @@ import (
 	"github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/templates"
 	"github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/types"
 	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/contrib/sessions"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
@@ -97,7 +98,7 @@ func main() {
 	r.Use(static.Serve("/images", static.LocalFile("public/images", true)))
 
 	// session store
-	store := sessions.NewCookieStore([]byte("mysession"))
+	store := memstore.NewStore([]byte("mysession"))
 	store.Options(sessions.Options{HttpOnly: true})
 	r.Use(sessions.Sessions("showwin_happy", store))
 

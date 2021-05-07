@@ -8,7 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/types"
-	"github.com/gin-gonic/contrib/sessions"
+	"github.com/gin-contrib/sessions"
 )
 
 type User types.User
