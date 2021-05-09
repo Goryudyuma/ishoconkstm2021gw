@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"net/http"
 	"os"
@@ -64,6 +65,27 @@ type commentProductIDKey struct {
 type commentProductIDValue struct {
 	count       int
 	commentMemo []types.CommentWriter
+}
+
+var usersHTMLCache sync.Map
+
+type usersHTMLCacheKey struct {
+	userID      int
+	currentUser bool
+}
+
+type usersHTMLCacheValue struct {
+	html []byte
+}
+
+var headerHTMLCache sync.Map
+
+type headerHTMLCacheKey struct {
+	userID int
+}
+
+type headerHTMLCacheValue struct {
+	html []byte
 }
 
 func getEnv(key, fallback string) string {
@@ -181,38 +203,61 @@ func main() {
 
 	// GET /users/:userId
 	r.GET("/users/:userId", func(c *gin.Context) {
+		var ret bytes.Buffer
 		cUser := currentUser(sessions.Default(c))
+		cUserUser := types.User(cUser)
+
+		templates.WriteHeader(&ret, cUserUser)
 
 		uid, _ := strconv.Atoi(c.Param("userId"))
 		user := getUser(uid)
 
-		products, totalPay := user.BuyingHistory(c)
+		key := usersHTMLCacheKey{
+			userID:      uid,
+			currentUser: uid == cUserUser.ID,
+		}
+		if valueRow, ok := usersHTMLCache.Load(key); ok {
+			value := valueRow.(usersHTMLCacheValue)
+			ret.Write(value.html)
+		} else {
+			products, totalPay := user.BuyingHistory(c)
 
-		// shorten description
-		var sdProducts []types.Product
-		for _, p := range products {
-			var productDescription string
-			productDescriptionRow, ok := productDescriptionMemo.Load(p.ID)
-			if !ok {
-				if utf8.RuneCountInString(p.Description) > 70 {
-					productDescription = string([]rune(p.Description)[:70]) + "…"
+			// shorten description
+			var sdProducts []types.Product
+			for _, p := range products {
+				var productDescription string
+				productDescriptionRow, ok := productDescriptionMemo.Load(p.ID)
+				if !ok {
+					if utf8.RuneCountInString(p.Description) > 70 {
+						productDescription = string([]rune(p.Description)[:70]) + "…"
+					} else {
+						productDescription = p.Description
+					}
+					productDescriptionMemo.Store(p.ID, productDescription)
 				} else {
-					productDescription = p.Description
+					productDescription = productDescriptionRow.(string)
 				}
-				productDescriptionMemo.Store(p.ID, productDescription)
-			} else {
-				productDescription = productDescriptionRow.(string)
-			}
-			p.Description = productDescription
-			sdProducts = append(sdProducts, types.Product(p))
+				p.Description = productDescription
+				sdProducts = append(sdProducts, types.Product(p))
 
-			if len(sdProducts) > 30 {
-				break
+				if len(sdProducts) > 30 {
+					break
+				}
+			}
+
+			var html bytes.Buffer
+			templates.WriteMyPage(&html, cUserUser.ID == user.ID, types.User(user), sdProducts, totalPay)
+			value := usersHTMLCacheValue{
+				html: html.Bytes(),
+			}
+			usersHTMLCache.Store(key, value)
+
+			if _, err := html.WriteTo(&ret); err != nil {
+				panic(err)
 			}
 		}
-
-		c.Data(http.StatusOK, "text/html; charset=utf-8",
-			[]byte(templates.MyPage(types.User(cUser), types.User(user), sdProducts, totalPay)))
+		templates.WriteFooter(&ret)
+		c.Data(http.StatusOK, "text/html; charset=utf-8", ret.Bytes())
 	})
 
 	// GET /products/:productId
@@ -236,6 +281,15 @@ func main() {
 			cUser := currentUser(sessions.Default(c))
 			cUser.BuyProduct(c.Param("productId"))
 
+			{
+				key := usersHTMLCacheKey{
+					userID:      cUser.ID,
+					currentUser: false,
+				}
+				usersHTMLCache.Delete(key)
+				key.currentUser = true
+				usersHTMLCache.Delete(key)
+			}
 			// redirect to user page
 			c.Redirect(http.StatusFound, "/users/"+strconv.Itoa(cUser.ID))
 		}
@@ -269,6 +323,8 @@ func main() {
 		productDescriptionMemo = sync.Map{}
 		historyUserID = sync.Map{}
 		commentProductID = sync.Map{}
+		usersHTMLCache = sync.Map{}
+		headerHTMLCache = sync.Map{}
 
 		rows, err := db.Query("SELECT id, name, email, password, last_login FROM users")
 		if err != nil {
@@ -285,12 +341,30 @@ func main() {
 
 			usersEmailPassword.Store(usersEmailPasswordKey{user.Email, user.Password}, user.ID)
 			usersID.Store(user.ID, user)
+
+			key := headerHTMLCacheKey{
+				userID: user.ID,
+			}
+			var html bytes.Buffer
+			templates.WriteHeader(&html, types.User(user))
+			headerHTMLCache.Store(key, headerHTMLCacheValue{
+				html: html.Bytes(),
+			})
 		}
 		err = rows.Close()
 		if err != nil {
 			c.String(http.StatusServiceUnavailable, err.Error())
 			return
 		}
+		var user User
+		key := headerHTMLCacheKey{
+			userID: 0,
+		}
+		var html bytes.Buffer
+		templates.WriteHeader(&html, types.User(user))
+		headerHTMLCache.Store(key, headerHTMLCacheValue{
+			html: html.Bytes(),
+		})
 
 		rows, err = db.Query("SELECT * FROM products")
 		if err != nil {

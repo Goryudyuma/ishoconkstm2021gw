@@ -1,0 +1,193 @@
+{% import "github.com/Goryudyuma/ishoconkstm2021gw/webapp/go/types" %}
+
+{% func ProductPage(currentUser types.User, product types.Product, alreadyBought bool) %}
+{%= Header(currentUser) %}
+<div class="jumbotron">
+  <div class="container">
+    <h2>{%s product.Name %}</h2>
+    {% if alreadyBought %}
+      <h4>あなたはすでにこの商品を買っています</h4>
+    {% endif %}
+  </div>
+</div>
+<div class="container">
+  <div class="row">
+    <div class="jumbotron">
+      <img src="{%s product.ImagePath %}" class="img-responsive" width="400"/>
+      <h2>価格</h2>
+      <p>{%d product.Price %} 円</p>
+      <h2>商品説明</h2>
+      <p>{%s product.Description %}</p>
+    </div>
+  </div>
+</div>
+{%= Footer() %}
+{% endfunc %}
+
+{% func MyPage(currentUser bool, user types.User, products []types.Product, totalPay int) %}
+<div class="jumbotron">
+  <div class="container">
+    <h2>{%s user.Name %} さんの購入履歴</h2>
+    <h4>合計金額: {%d totalPay %}円</h4>
+  </div>
+</div>
+<div class="container">
+  <div class="row">
+    {% for _, product := range products %}
+      <div class="col-md-4">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <a href="/products/{%d product.ID %}">{%s product.Name %}</a>
+          </div>
+          <div class="panel-body">
+            <a href="/products/{%d product.ID %}"><img src="{%s product.ImagePath %}" class="img-responsive" /></a>
+            <h4>価格</h4>
+            <p>{%d product.Price %}円</p>
+            <h4>商品説明</h4>
+            <p>{%s product.Description %}</p>
+            <h4>購入日時</h4>
+            <p>{%s product.CreatedAt %}</p>
+          </div>
+          {% if currentUser %}
+            <div class="panel-footer">
+              <form method="POST" action="/comments/{%d product.ID %}">
+                <fieldset>
+                  <div class="form-group">
+                    <input class="form-control" placeholder="Comment Here" name="content" value="">
+                  </div>
+                  <input class="btn btn-success btn-block" type="submit" name="send_comment" value="コメントを送信" />
+                </fieldset>
+              </form>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endfunc %}
+
+{% func Login(message string) %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html" charset="utf-8">
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<title>すごいECサイト</title>
+</head>
+<body class="container">
+  <h1 class="jumbotron"><a href="/">すごいECサイト</a></h1>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 col-md-offset-4">
+        <div class="text-danger" id="logout-message">{%s message %}</div>
+        <div class="login-panel panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Sign In</h3>
+          </div>
+          <div class="panel-body">
+            <form method="POST" action="/login">
+              <fieldset>
+                <div class="form-group">
+                  <input class="form-control" placeholder="E-mail" name="email" type="email" autofocus>
+                </div>
+                <div class="form-group">
+                  <input class="form-control" placeholder="Password" name="password" type="password" value="">
+                </div>
+                <!-- Change this to a button or input when using this as a form -->
+                <input class="btn btn-lg btn-success btn-block" type="submit" name="Login" value="Login" />
+              </fieldset>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+{% endfunc %}
+
+{% func Header(currentUser types.User) %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html" charset="utf-8">
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<title>すごいECサイト</title>
+</head>
+
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/">すごいECサイトで爆買いしよう!</a>
+    </div>
+    <div class="header clearfix">
+    {% if currentUser.ID != 0 %}
+      <nav>
+        <ul class="nav nav-pills pull-right">
+          <li role="presentation"><a href="/users/{%d currentUser.ID %}">{%s currentUser.Name %}さんの購入履歴</a></li>
+          <li role="presentation"><a href="/logout">Logout</a></li>
+        </ul>
+      </nav>
+    {% else %}
+    <nav>
+      <ul class="nav nav-pills pull-right">
+        <li role="presentation"><a href="/login">Login</a></li>
+      </ul>
+    </nav>
+    {% endif %}
+  </div>
+</nav>
+
+{% endfunc %}
+{% func Footer() %}
+
+</body>
+</html>
+{% endfunc %}
+
+{% func Index(currentUser types.User, products []types.ProductWithComments) %}
+{%= Header(currentUser) %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>今日は大安売りの日です！</h1>
+  </div>
+</div>
+<div class="container">
+  <div class="row">
+    {% for _, product := range products %}
+      <div class="col-md-4">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <a href="/products/{%d product.ID %}">{%s product.Name %}</a>
+          </div>
+          <div class="panel-body">
+            <a href="/products/{%d product.ID %}"><img src="{%s product.ImagePath %}" class="img-responsive" /></a>
+            <h4>価格</h4>
+            <p>{%d product.Price %}円</p>
+            <h4>商品説明</h4>
+            <p>{%s product.Description %}</p>
+            <h4>{%d product.CommentCount %}件のレビュー</h4>
+            <ul>
+              {% for _, cw := range product.Comments %}
+                <li>{%s cw.Content %} by {%s cw.Writer %}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% if currentUser.ID > 0 %}
+            <div class="panel-footer">
+              <form method="POST" action="/products/buy/{%d product.ID %}">
+                <fieldset>
+                  <input class="btn btn-success btn-block" type="submit" name="buy" value="購入" />
+                </fieldset>
+              </form>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{%= Footer() %}
+{% endfunc %}
