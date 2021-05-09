@@ -207,7 +207,11 @@ func main() {
 		cUser := currentUser(sessions.Default(c))
 		cUserUser := types.User(cUser)
 
-		templates.WriteHeader(&ret, cUserUser)
+		if valueRow, ok := headerHTMLCache.Load(headerHTMLCacheKey{userID: cUserUser.ID}); ok {
+			ret.Write(valueRow.(headerHTMLCacheValue).html)
+		} else {
+			templates.WriteHeader(&ret, cUserUser)
+		}
 
 		uid, _ := strconv.Atoi(c.Param("userId"))
 		user := getUser(uid)
