@@ -192,13 +192,17 @@ func main() {
 		}
 
 		isLoginUser := cUser.ID > 0
-		if valueRow, ok := indexHTMLCache.Load(indexHTMLCacheKey{
+		key := indexHTMLCacheKey{
 			page:        page,
 			isLoginUser: isLoginUser,
-		}); ok {
+		}
+		if valueRow, ok := indexHTMLCache.Load(key); ok {
 			ret.Write(valueRow.(indexHTMLCacheValue).html)
 		} else {
-			ret.Write(indexPageHTML(page, isLoginUser))
+			html := indexPageHTML(page, isLoginUser)
+			ret.Write(html)
+
+			indexHTMLCache.Store(key, indexHTMLCacheValue{html: html})
 		}
 		templates.WriteFooter(&ret)
 
@@ -312,6 +316,18 @@ func main() {
 			// create comment
 			cUser := currentUser(sessions.Default(c))
 			cUser.CreateComment(c.Param("productId"), c.PostForm("content"))
+
+			productId, err := strconv.Atoi(c.Param("productId"))
+			if err != nil {
+				panic(err)
+			}
+			key := indexHTMLCacheKey{
+				page:        (10000 - productId) / 50,
+				isLoginUser: false,
+			}
+			indexHTMLCache.Delete(key)
+			key.isLoginUser = true
+			indexHTMLCache.Delete(key)
 
 			// redirect to user page
 			c.Redirect(http.StatusFound, "/users/"+strconv.Itoa(cUser.ID))
