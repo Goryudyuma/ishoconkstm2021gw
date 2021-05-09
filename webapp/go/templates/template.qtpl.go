@@ -436,13 +436,8 @@ func Footer() string {
 }
 
 //line templates/template.qtpl:150
-func StreamIndex(qw422016 *qt422016.Writer, currentUser types.User, products []types.ProductWithComments) {
+func StreamIndex(qw422016 *qt422016.Writer, isLoginUser bool, products []types.ProductWithComments) {
 //line templates/template.qtpl:150
-	qw422016.N().S(`
-`)
-//line templates/template.qtpl:151
-	StreamHeader(qw422016, currentUser)
-//line templates/template.qtpl:151
 	qw422016.N().S(`
 <div class="jumbotron">
   <div class="container">
@@ -452,82 +447,82 @@ func StreamIndex(qw422016 *qt422016.Writer, currentUser types.User, products []t
 <div class="container">
   <div class="row">
     `)
-//line templates/template.qtpl:159
+//line templates/template.qtpl:158
 	for _, product := range products {
-//line templates/template.qtpl:159
+//line templates/template.qtpl:158
 		qw422016.N().S(`
       <div class="col-md-4">
         <div class="panel panel-default">
           <div class="panel-heading">
             <a href="/products/`)
-//line templates/template.qtpl:163
+//line templates/template.qtpl:162
 		qw422016.N().D(product.ID)
-//line templates/template.qtpl:163
+//line templates/template.qtpl:162
 		qw422016.N().S(`">`)
-//line templates/template.qtpl:163
+//line templates/template.qtpl:162
 		qw422016.E().S(product.Name)
-//line templates/template.qtpl:163
+//line templates/template.qtpl:162
 		qw422016.N().S(`</a>
           </div>
           <div class="panel-body">
             <a href="/products/`)
-//line templates/template.qtpl:166
+//line templates/template.qtpl:165
 		qw422016.N().D(product.ID)
-//line templates/template.qtpl:166
+//line templates/template.qtpl:165
 		qw422016.N().S(`"><img src="`)
-//line templates/template.qtpl:166
+//line templates/template.qtpl:165
 		qw422016.E().S(product.ImagePath)
-//line templates/template.qtpl:166
+//line templates/template.qtpl:165
 		qw422016.N().S(`" class="img-responsive" /></a>
             <h4>価格</h4>
             <p>`)
-//line templates/template.qtpl:168
+//line templates/template.qtpl:167
 		qw422016.N().D(product.Price)
-//line templates/template.qtpl:168
+//line templates/template.qtpl:167
 		qw422016.N().S(`円</p>
             <h4>商品説明</h4>
             <p>`)
-//line templates/template.qtpl:170
+//line templates/template.qtpl:169
 		qw422016.E().S(product.Description)
-//line templates/template.qtpl:170
+//line templates/template.qtpl:169
 		qw422016.N().S(`</p>
             <h4>`)
-//line templates/template.qtpl:171
+//line templates/template.qtpl:170
 		qw422016.N().D(product.CommentCount)
-//line templates/template.qtpl:171
+//line templates/template.qtpl:170
 		qw422016.N().S(`件のレビュー</h4>
             <ul>
               `)
-//line templates/template.qtpl:173
+//line templates/template.qtpl:172
 		for _, cw := range product.Comments {
-//line templates/template.qtpl:173
+//line templates/template.qtpl:172
 			qw422016.N().S(`
                 <li>`)
-//line templates/template.qtpl:174
+//line templates/template.qtpl:173
 			qw422016.E().S(cw.Content)
-//line templates/template.qtpl:174
+//line templates/template.qtpl:173
 			qw422016.N().S(` by `)
-//line templates/template.qtpl:174
+//line templates/template.qtpl:173
 			qw422016.E().S(cw.Writer)
-//line templates/template.qtpl:174
+//line templates/template.qtpl:173
 			qw422016.N().S(`</li>
               `)
-//line templates/template.qtpl:175
+//line templates/template.qtpl:174
 		}
-//line templates/template.qtpl:175
+//line templates/template.qtpl:174
 		qw422016.N().S(`
             </ul>
           </div>
           `)
-//line templates/template.qtpl:178
-		if currentUser.ID > 0 {
-//line templates/template.qtpl:178
+//line templates/template.qtpl:177
+		if isLoginUser {
+//line templates/template.qtpl:177
 			qw422016.N().S(`
             <div class="panel-footer">
               <form method="POST" action="/products/buy/`)
-//line templates/template.qtpl:180
+//line templates/template.qtpl:179
 			qw422016.N().D(product.ID)
-//line templates/template.qtpl:180
+//line templates/template.qtpl:179
 			qw422016.N().S(`">
                 <fieldset>
                   <input class="btn btn-success btn-block" type="submit" name="buy" value="購入" />
@@ -535,50 +530,45 @@ func StreamIndex(qw422016 *qt422016.Writer, currentUser types.User, products []t
               </form>
             </div>
           `)
-//line templates/template.qtpl:186
+//line templates/template.qtpl:185
 		}
-//line templates/template.qtpl:186
+//line templates/template.qtpl:185
 		qw422016.N().S(`
         </div>
       </div>
     `)
-//line templates/template.qtpl:189
+//line templates/template.qtpl:188
 	}
-//line templates/template.qtpl:189
+//line templates/template.qtpl:188
 	qw422016.N().S(`
   </div>
 </div>
 `)
-//line templates/template.qtpl:192
-	StreamFooter(qw422016)
-//line templates/template.qtpl:192
-	qw422016.N().S(`
-`)
-//line templates/template.qtpl:193
+//line templates/template.qtpl:191
 }
 
-//line templates/template.qtpl:193
-func WriteIndex(qq422016 qtio422016.Writer, currentUser types.User, products []types.ProductWithComments) {
-//line templates/template.qtpl:193
+//line templates/template.qtpl:191
+func WriteIndex(qq422016 qtio422016.Writer, isLoginUser bool, products []types.ProductWithComments) {
+//line templates/template.qtpl:191
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line templates/template.qtpl:193
-	StreamIndex(qw422016, currentUser, products)
-//line templates/template.qtpl:193
+//line templates/template.qtpl:191
+	StreamIndex(qw422016, isLoginUser, products)
+//line templates/template.qtpl:191
 	qt422016.ReleaseWriter(qw422016)
-//line templates/template.qtpl:193
+//line templates/template.qtpl:191
 }
 
-//line templates/template.qtpl:193
-func Index(currentUser types.User, products []types.ProductWithComments) string {
-//line templates/template.qtpl:193
+//line templates/template.qtpl:191
+func Index(isLoginUser bool, products []types.ProductWithComments) string {
+//line templates/template.qtpl:191
 	qb422016 := qt422016.AcquireByteBuffer()
-//line templates/template.qtpl:193
-	WriteIndex(qb422016, currentUser, products)
-//line templates/template.qtpl:193
+//line templates/template.qtpl:191
+	WriteIndex(qb422016, isLoginUser, products)
+//line templates/template.qtpl:191
 	qs422016 := string(qb422016.B)
-//line templates/template.qtpl:193
+//line templates/template.qtpl:191
 	qt422016.ReleaseByteBuffer(qb422016)
-//line templates/template.qtpl:193
+//line templates/template.qtpl:191
 	return qs422016
-//line templates/template.qtpl:193
+//line templates/template.qtpl:191
 }

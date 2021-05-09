@@ -147,8 +147,7 @@
 </html>
 {% endfunc %}
 
-{% func Index(currentUser types.User, products []types.ProductWithComments) %}
-{%= Header(currentUser) %}
+{% func Index(isLoginUser bool, products []types.ProductWithComments) %}
 <div class="jumbotron">
   <div class="container">
     <h1>今日は大安売りの日です！</h1>
@@ -175,7 +174,7 @@
               {% endfor %}
             </ul>
           </div>
-          {% if currentUser.ID > 0 %}
+          {% if isLoginUser %}
             <div class="panel-footer">
               <form method="POST" action="/products/buy/{%d product.ID %}">
                 <fieldset>
@@ -189,5 +188,4 @@
     {% endfor %}
   </div>
 </div>
-{%= Footer() %}
 {% endfunc %}

@@ -88,6 +88,17 @@ type headerHTMLCacheValue struct {
 	html []byte
 }
 
+var indexHTMLCache sync.Map
+
+type indexHTMLCacheKey struct {
+	page        int
+	isLoginUser bool
+}
+
+type indexHTMLCacheValue struct {
+	html []byte
+}
+
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value
@@ -166,39 +177,32 @@ func main() {
 
 	// GET /
 	r.GET("/", func(c *gin.Context) {
+		var ret bytes.Buffer
 		cUser := currentUser(sessions.Default(c))
+
+		if valueRow, ok := headerHTMLCache.Load(headerHTMLCacheKey{userID: cUser.ID}); ok {
+			ret.Write(valueRow.(headerHTMLCacheValue).html)
+		} else {
+			templates.WriteHeader(&ret, types.User(cUser))
+		}
 
 		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil {
 			page = 0
 		}
-		products := getProductsWithCommentsAt(page)
-		// shorten description and comment
-		var sProducts []types.ProductWithComments
-		for _, p := range products {
-			var productDescription string
-			productDescriptionRow, ok := productDescriptionMemo.Load(p.ID)
-			if !ok {
-				if utf8.RuneCountInString(p.Description) > 70 {
-					productDescription = string([]rune(p.Description)[:70]) + "…"
-				} else {
-					productDescription = p.Description
-				}
-				productDescriptionMemo.Store(p.ID, productDescription)
-			} else {
-				productDescription = productDescriptionRow.(string)
-			}
-			p.Description = productDescription
 
-			var newCW []types.CommentWriter
-			for _, c := range p.Comments {
-				newCW = append(newCW, c)
-			}
-			p.Comments = newCW
-			sProducts = append(sProducts, types.ProductWithComments(p))
+		isLoginUser := cUser.ID > 0
+		if valueRow, ok := indexHTMLCache.Load(indexHTMLCacheKey{
+			page:        page,
+			isLoginUser: isLoginUser,
+		}); ok {
+			ret.Write(valueRow.(indexHTMLCacheValue).html)
+		} else {
+			ret.Write(indexPageHTML(page, isLoginUser))
 		}
+		templates.WriteFooter(&ret)
 
-		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(templates.Index(types.User(cUser), sProducts)))
+		c.Data(http.StatusOK, "text/html; charset=utf-8", ret.Bytes())
 	})
 
 	// GET /users/:userId
@@ -329,6 +333,7 @@ func main() {
 		commentProductID = sync.Map{}
 		usersHTMLCache = sync.Map{}
 		headerHTMLCache = sync.Map{}
+		indexHTMLCache = sync.Map{}
 
 		rows, err := db.Query("SELECT id, name, email, password, last_login FROM users")
 		if err != nil {
@@ -480,10 +485,56 @@ func main() {
 			return
 		}
 
+		for page := 0; page < 200; page++ {
+			isLoginUser := true
+			indexHTMLCache.Store(indexHTMLCacheKey{
+				page:        page,
+				isLoginUser: isLoginUser,
+			}, indexHTMLCacheValue{
+				html: indexPageHTML(page, isLoginUser),
+			})
+			isLoginUser = false
+			indexHTMLCache.Store(indexHTMLCacheKey{
+				page:        page,
+				isLoginUser: isLoginUser,
+			}, indexHTMLCacheValue{
+				html: indexPageHTML(page, isLoginUser),
+			})
+		}
+
 		runtime.GC()
 
 		c.String(http.StatusOK, "Finish")
 	})
 
 	r.RunUnix("/var/run/go/go.sock")
+}
+
+func indexPageHTML(page int, isLoginUser bool) []byte {
+	products := getProductsWithCommentsAt(page)
+	// shorten description and comment
+	var sProducts []types.ProductWithComments
+	for _, p := range products {
+		var productDescription string
+		productDescriptionRow, ok := productDescriptionMemo.Load(p.ID)
+		if !ok {
+			if utf8.RuneCountInString(p.Description) > 70 {
+				productDescription = string([]rune(p.Description)[:70]) + "…"
+			} else {
+				productDescription = p.Description
+			}
+			productDescriptionMemo.Store(p.ID, productDescription)
+		} else {
+			productDescription = productDescriptionRow.(string)
+		}
+		p.Description = productDescription
+
+		var newCW []types.CommentWriter
+		for _, c := range p.Comments {
+			newCW = append(newCW, c)
+		}
+		p.Comments = newCW
+		sProducts = append(sProducts, types.ProductWithComments(p))
+	}
+	return []byte(templates.Index(isLoginUser, sProducts))
 }
